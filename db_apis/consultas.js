@@ -321,9 +321,17 @@ async function ultimosLugaresPorTemporada(temporada) {
  * Consulta 7
  */
 
-module.exports.consulta7 = async function (temporada) {
-    const result = await posicionCadaEquipoPorJornada(temporada);
-    return result
+module.exports.consulta7 = async function () {
+    // const partidos = await partidoModel.find({});
+    // const partidosConDiferencia = [];
+    // for (const partido of partidos) {
+    //     const diferencia = Math.abs(partido.goles_local - partido.goles_visitante);
+
+    //     partidosConDiferencia.push({, diferencia})
+    // }
+
+    // return partidosConDiferencia.sort((a, b)=> a.diferencia - b.diferencia);
+    return []
 }
 
 /**
@@ -331,7 +339,7 @@ module.exports.consulta7 = async function (temporada) {
  */
 
 module.exports.consulta8 = async function (temporada) {
-    const result = await ultimosLugaresPorTemporada(temporada);
+    const result = await primerosLugaresPorTemporada(temporada);
     return result
 }
 
@@ -339,8 +347,9 @@ module.exports.consulta8 = async function (temporada) {
  * Consulta 9
  */
 
-module.exports.consulta9 = async function () {
-    return []
+module.exports.consulta9 = async function (temporada) {
+    const result = await ultimosLugaresPorTemporada(temporada);
+    return result
 }
 
 /**
