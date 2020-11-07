@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const jornadaSchema = new Schema({
+const jornadaSchema = new mongoose.Schema({
     num_jornada: { type: Number, required: true },
     anio: { type: Number, required: true },
     inicio_temporada: { type: Number, required: true },

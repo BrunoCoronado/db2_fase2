@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const partidoSchema = new Schema({
+const partidoSchema = new mongoose.Schema({
     fecha: { type: String, required: true },
     id_equipo_local: { type: Number, required: true },
     id_equipo_visitante: { type: Number, required: true },
