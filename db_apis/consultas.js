@@ -150,7 +150,7 @@ module.exports.consulta3 = async function () {
         }
     }
 
-    equipos.splice(5, equipos.length - 5)
+    //equipos.splice(5, equipos.length - 5)
 
     return equipos
 }
