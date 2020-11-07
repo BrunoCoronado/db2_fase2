@@ -1,6 +1,4 @@
 const database = require('../services/database');
-const equipoModel = require('../services/database/models/equipo');
-const jornadaModel = require('../services/database/models/jornada');
 const partidoModel = require('../services/database/models/partido');
 
 /**
@@ -102,24 +100,50 @@ module.exports.consulta5 = async function () {
             ORDER BY equipo_local, equipo_visitante) derrotas_por_equipo
         GROUP BY derrotas_por_equipo.equipo_vencedor
     */
-    
-    const data = partidoModel.aggregate([
-        { $match: { $expr: { $gt: [ "$goles_local" , "$goles_visitante" ] } }  },
+
+    const data = await partidoModel.aggregate([
+        { $match: { $expr: { $gt: ["$goles_local", "$goles_visitante"] } } },
         {
             $group: {
                 _id: { id_equipo_local: '$id_equipo_local', id_equipo_visitante: '$id_equipo_visitante' },
                 count: { $sum: 1 }
             },
         },
-        {
-            $group: {
-                _id: { id_equipo_local: '$_id.id_equipo_local' },
-                max: { $max: '$count' }
-            },
-            // id: {visit: '$_id.id_equipo_visitante'}
-            // Falta obtener el equipo_visitante.
-        }
-    ])
+        // {
+        //     $group: {
+        //         _id: { id_equipo_local: '$_id.id_equipo_local' },
+        //         max: { $max: '$count' }
+        //     },
+        //     // id: {visit: '$_id.id_equipo_visitante'}
+        //     // Falta obtener el equipo_visitante.
+        // }
+    ]);
+
+    /*
+    [
+    {
+        "_id": {
+            "id_equipo_local": 22,
+            "id_equipo_visitante": 11
+        },
+        "count": 1
+    },
+    {
+        "_id": {
+            "id_equipo_local": 15,
+            "id_equipo_visitante": 34
+        },
+        "count": 14
+    },
+    {
+        "_id": {
+            "id_equipo_local": 24,
+            "id_equipo_visitante": 45
+        },
+        "count": 1
+    },
+]
+    */
 
 
     // const data = await partidoModel.find({
@@ -153,8 +177,46 @@ SELECT 	derrotas_por_equipo.equipo_vencedor,
  * Consulta 6
  */
 
-module.exports.consulta6 = async function () {
-    return golesYPuntosPorTemporada()
+module.exports.consulta6 = async function (equipo) {
+    return await posicionDeUnEquipoEnCadaTemporada(equipo);
+}
+
+async function posicionDeUnEquipoEnCadaTemporada(equipoBuscado) {
+    const temporadas = await partidoModel.aggregate([
+        {
+            $group: {
+                _id: { temporada: '$temporada' },
+            }
+        },
+        {
+            $sort: { "_id.temporada": 1 },
+        }
+    ])
+
+    const posicionesEnCadaTemporada = [];
+
+    for (const temporada of temporadas) {
+        const equipos = await posicionCadaEquipoPorTemporada(temporada._id.temporada);
+        posicionesEnCadaTemporada.push([
+            ...equipos.filter(equipo => equipo.equipo == equipoBuscado)
+        ])
+    }
+
+    return posicionesEnCadaTemporada;
+}
+
+async function posicionCadaEquipoPorTemporada(temporada) {
+    const por_temporada = await golesYPuntosPorTemporada();
+
+    const filt = por_temporada.filter(result => result._id.temporada == temporada);
+
+    return filt.sort((a, b) => b.puntos - a.puntos).map((result, index) => ({
+        equipo: result._id.equipo,
+        temporada: result._id.temporada,
+        puntos: result.puntos,
+        goles: result.goles,
+        posicion: index + 1
+    }));
 }
 
 async function golesYPuntosPorTemporada() {
@@ -185,20 +247,92 @@ async function golesYPuntosPorTemporada() {
     })
     return comolocal;
 }
+
+
+async function golesYPuntosPorJornada(temporada) {
+    const comolocal = await partidoModel.aggregate([
+        {
+            $match: { temporada: temporada }
+        },
+        {
+            $group: {
+                _id: { jornada: '$jornada', equipo: '$equipo_local' },
+                puntos: { $sum: "$puntos_local" },
+                goles: { $sum: "$goles_local" }
+            },
+        },
+    ]);
+
+    const comovisitante = await partidoModel.aggregate([
+        {
+            $match: { temporada: temporada }
+        },
+        {
+            $group: {
+                _id: { jornada: '$jornada', equipo: '$equipo_visitante' },
+                puntos: { $sum: "$puntos_visitante" },
+                goles: { $sum: "$goles_visitante" }
+            },
+        },
+    ]);
+
+    comovisitante.forEach(data => {
+        const index = comolocal.findIndex(local => local._id.jornada == data._id.jornada && local._id.equipo == data._id.equipo);
+        if (index > -1) {
+            comolocal[index].puntos += data.puntos;
+            comolocal[index].goles += data.goles;
+        } else {
+            comolocal.push({ ...data });
+        }
+    })
+    return comolocal;
+}
+
+async function primerosLugaresPorTemporada(temporada) {
+    const por_jornada = await golesYPuntosPorJornada(temporada);
+
+    const filt = por_jornada.filter(result => result._id.jornada == 1);
+    const ordenMayorAMenor = filt.sort((a, b) => b.puntos - a.puntos);
+    const punteoMasAlto = ordenMayorAMenor[0].puntos;
+    return ordenMayorAMenor.filter(result => result.puntos == punteoMasAlto).map((result) => ({
+        equipo: result._id.equipo,
+        jornada: result._id.jornada,
+        puntos: result.puntos,
+        goles: result.goles,
+        temporada
+    }));
+}
+
+async function ultimosLugaresPorTemporada(temporada) {
+    const por_jornada = await golesYPuntosPorJornada(temporada);
+
+    const filt = por_jornada.filter(result => result._id.jornada == 1);
+    const ordenMayorAMenor = filt.sort((a, b) => a.puntos - b.puntos);
+    const punteoMasBajo = ordenMayorAMenor[0].puntos;
+    return ordenMayorAMenor.filter(result => result.puntos == punteoMasBajo).map((result) => ({
+        equipo: result._id.equipo,
+        jornada: result._id.jornada,
+        puntos: result.puntos,
+        goles: result.goles,
+        temporada
+    }));
+}
 /**
  * Consulta 7
  */
 
-module.exports.consulta7 = async function () {
-    return []
+module.exports.consulta7 = async function (temporada) {
+    const result = await posicionCadaEquipoPorJornada(temporada);
+    return result
 }
 
 /**
  * Consulta 8
  */
 
-module.exports.consulta8 = async function () {
-    return []
+module.exports.consulta8 = async function (temporada) {
+    const result = await ultimosLugaresPorTemporada(temporada);
+    return result
 }
 
 /**
