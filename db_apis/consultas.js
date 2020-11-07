@@ -66,7 +66,6 @@ module.exports.consulta2 = async function () {
         t.equipos.splice(4, t.equipos.length - 3)
     });
 
-
     return temporadas
 }
 
@@ -75,7 +74,85 @@ module.exports.consulta2 = async function () {
  */
 
 module.exports.consulta3 = async function () {
-    return []
+    let data = await golesYPuntosPorTemporada()
+
+    for (let i = 0; i < data.length; i++) {
+        for (let j = 0; j < data.length - i - 1; j++) {
+            if(data[j]._id.temporada > data[j + 1]._id.temporada){
+                let tmp = data[j];
+                data[j] = data[j + 1];
+                data[j + 1] = tmp
+            }
+        }
+    }
+
+    let temporadas = []
+
+    data.forEach(d => {
+        let index = temporadas.map(t => t.temporada).indexOf(d._id.temporada)
+        if(index == -1){
+            temporadas.push({
+                temporada:d._id.temporada,
+                equipos: [
+                    {
+                        nombre: d._id.equipo,
+                        puntos: d.puntos
+                    }
+                ]
+            })
+        }else{
+            temporadas[index].equipos.push({
+                nombre: d._id.equipo,
+                puntos: d.puntos
+            })     
+        }
+    });
+
+    temporadas.forEach(t => {
+        for (let i = 0; i < t.equipos.length; i++) {
+            for (let j = 0; j < t.equipos.length - i - 1; j++) {
+                if(t.equipos[j].puntos < t.equipos[j + 1].puntos){
+                    let tmp = t.equipos[j];
+                    t.equipos[j] = t.equipos[j + 1];
+                    t.equipos[j + 1] = tmp
+                }
+            }
+        }
+    });
+
+    temporadas.forEach(t => {
+        t.equipos.splice(1, t.equipos.length - 1)
+    });
+
+    equipos = []
+
+    temporadas.forEach(t => {
+        let index = equipos.map(e => e.equipo).indexOf(t.equipos[0].nombre)
+
+        if(index == -1){
+            equipos.push({
+                equipo: t.equipos[0].nombre,
+                victorias: 1
+            })
+        }else{
+            equipos[index].victorias++;
+        }
+
+    });
+
+    for (let i = 0; i < equipos.length; i++) {
+        for (let j = 0; j < equipos.length - i - 1; j++) {
+            if(equipos[j].victorias < equipos[j + 1].victorias){
+                let tmp = equipos[j];
+                equipos[j] = equipos[j + 1];
+                equipos[j + 1] = tmp
+            }
+        }
+    }
+
+    equipos.splice(5, equipos.length - 5)
+
+    return equipos
 }
 
 /**

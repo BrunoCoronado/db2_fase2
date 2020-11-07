@@ -9,7 +9,7 @@ module.exports.consulta2 = async function(request, response, next){
 }
 
 module.exports.consulta3 = async function(request, response, next){
-    response.status(200).json();
+    response.status(200).json(await consultas.consulta3());
 }
 
 module.exports.consulta4 = async function(request, response, next){
