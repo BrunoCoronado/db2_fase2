@@ -3,8 +3,6 @@ const equipoModel = require('../services/database/models/equipo');
 const jornadaModel = require('../services/database/models/jornada');
 const partidoModel = require('../services/database/models/partido');
 
-const partidoModel = require('../services/database/models/partido')
-
 
 async function golesYPuntosPorTemporada() {
     const comolocal = await partidoModel.aggregate([
@@ -431,6 +429,4 @@ module.exports.consulta10 = async function(){
     
 
     return datos;
-module.exports.consulta10 = async function () {
-    return []
 }
