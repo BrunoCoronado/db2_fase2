@@ -21,7 +21,7 @@ module.exports.consulta5 = async function(request, response, next){
 }
 
 module.exports.consulta6 = async function(request, response, next){
-    response.status(200).json();
+    response.status(200).json(await consultas.consulta6());
 }
 
 module.exports.consulta7 = async function(request, response, next){

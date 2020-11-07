@@ -154,9 +154,37 @@ SELECT 	derrotas_por_equipo.equipo_vencedor,
  */
 
 module.exports.consulta6 = async function () {
-    return []
+    return golesYPuntosPorTemporada()
 }
 
+async function golesYPuntosPorTemporada() {
+    const comolocal = await partidoModel.aggregate([
+        {
+            $group: {
+                _id: { temporada: '$temporada', equipo: '$equipo_local' },
+                puntos: { $sum: "$puntos_local" },
+                goles: { $sum: "$goles_local" }
+            },
+        },
+    ]);
+
+    const comovisitante = await partidoModel.aggregate([
+        {
+            $group: {
+                _id: { temporada: '$temporada', equipo: '$equipo_visitante' },
+                puntos: { $sum: "$puntos_visitante" },
+                goles: { $sum: "$goles_visitante" }
+            },
+        },
+    ]);
+
+    comovisitante.forEach(data => {
+        const index = comolocal.findIndex(local => local._id.temporada == data._id.temporada && local._id.equipo == data._id.equipo);
+        comolocal[index].puntos += data.puntos;
+        comolocal[index].goles += data.goles;
+    })
+    return comolocal;
+}
 /**
  * Consulta 7
  */
