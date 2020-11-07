@@ -1,5 +1,9 @@
 const database = require('../services/database')
 
+const jornadaModel = require('../services/database/models/jornada')
+const equipoModel = require('../services/database/models/equipo')
+const partidoModel = require('../services/database/models/partido')
+
 /**
  * Consulta 1
  */
@@ -77,5 +81,17 @@ module.exports.consulta9 = async function(){
  */
 
 module.exports.consulta10 = async function(){
-    return []
+
+    const data = partidoModel.find({
+        "fecha": /.*(1979|1980)-[0-9]+-[0-9]+.*/
+    });
+
+    var goles = 0;
+
+    (await data).forEach(dato => {
+        goles += dato.goles_local+dato.goles_visitante;
+    })
+
+    return goles;
+
 }
