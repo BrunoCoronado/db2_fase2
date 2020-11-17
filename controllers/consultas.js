@@ -21,19 +21,19 @@ module.exports.consulta5 = async function(request, response, next){
 }
 
 module.exports.consulta6 = async function(request, response, next){
-    response.status(200).json(await consultas.consulta6());
+    response.status(200).json(await consultas.consulta6(request.body.equipo));
 }
 
 module.exports.consulta7 = async function(request, response, next){
-    response.status(200).json();
+    response.status(200).json(await consultas.consulta7());
 }
 
 module.exports.consulta8 = async function(request, response, next){
-    response.status(200).json();
+    response.status(200).json(await consultas.consulta8(request.body.temporada));
 }
 
 module.exports.consulta9 = async function(request, response, next){
-    response.status(200).json();
+    response.status(200).json(await consultas.consulta9(request.body.temporada));
 }
 
 module.exports.consulta10 = async function(request, response, next){
